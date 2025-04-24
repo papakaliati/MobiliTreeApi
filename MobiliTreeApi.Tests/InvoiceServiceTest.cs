@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using MobiliTreeApi.Repositories;
 using MobiliTreeApi.Services;
 using Xunit;
@@ -11,12 +12,14 @@ namespace MobiliTreeApi.Tests
         private readonly ISessionsRepository _sessionsRepository;
         private readonly IParkingFacilityRepository _parkingFacilityRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly ILogger<InvoiceService> _invoiceServiceLogger;
 
         public InvoiceServiceTest()
         {
             _sessionsRepository = new SessionsRepositoryFake(FakeData.GetSeedSessions());
             _parkingFacilityRepository = new ParkingFacilityRepositoryFake(FakeData.GetSeedServiceProfiles());
             _customerRepository = new CustomerRepositoryFake(FakeData.GetSeedCustomers());
+            _invoiceServiceLogger = new Logger<InvoiceService>(new LoggerFactory());
         }
 
         [Fact]
@@ -132,12 +135,160 @@ namespace MobiliTreeApi.Tests
             Assert.Equal("c002", invoiceCust2.CustomerId);
         }
 
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_1h_1()
+        {
+            var startDateTime = new DateTime(2025, 04, 24, 0, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(1)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(0.5m, invoice.Amount);
+        }
+
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_1h_2()
+        {
+            var startDateTime = new DateTime(2025, 04, 24, 10, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(1)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(2.5m, invoice.Amount);
+        }
+
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_1h_3()
+        {
+            var startDateTime = new DateTime(2025, 04, 24, 20, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(1)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(1.5m, invoice.Amount);
+        }
+
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_2h()
+        {
+            var startDateTime = new DateTime(2025, 04, 24, 6, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(2)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(3m, invoice.Amount);
+        }
+
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_10h()
+        {
+            var startDateTime = new DateTime(2025, 04, 24, 0, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(10)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(11m, invoice.Amount);
+        }
+
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_24h()
+        {
+            var startDateTime = new DateTime(2025, 04, 24, 0, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(24)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(40m, invoice.Amount);
+        }
+
+        [Fact]
+        public void GivenOneSessionInTheStore_WhenQueriedForExistingParkingFacility_ThenReturnInvoiceListWithOneElement_CalculateCorrectValue_24h_wkd()
+        {
+            var startDateTime = new DateTime(2025, 04, 20, 0, 1, 0, DateTimeKind.Utc);
+            _sessionsRepository.AddSession(new Domain.Session
+            {
+                CustomerId = "some customer",
+                ParkingFacilityId = "pf001",
+                StartDateTime = startDateTime,
+                EndDateTime = startDateTime.AddHours(24)
+            });
+
+            var result = GetSut().GetInvoices("pf001");
+
+            var invoice = Assert.Single(result);
+            Assert.NotNull(invoice);
+            Assert.Equal("pf001", invoice.ParkingFacilityId);
+            Assert.Equal("some customer", invoice.CustomerId);
+            Assert.Equal(47.2m, invoice.Amount);
+        }
+
         private IInvoiceService GetSut()
         {
             return new InvoiceService(
                 _sessionsRepository, 
                 _parkingFacilityRepository,
-                _customerRepository);
+                _customerRepository,
+                _invoiceServiceLogger);
         }
     }
 }
