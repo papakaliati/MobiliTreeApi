@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using MobiliTreeApi.Domain;
 using MobiliTreeApi.Repositories;
+using static System.Collections.Specialized.BitVector32;
 
 namespace MobiliTreeApi.Services
 {
@@ -151,6 +152,8 @@ namespace MobiliTreeApi.Services
 
         /// <summary>
         /// Timezone is not immediately clear, so we will assume that the session start and end times are in UTC.
+        /// As per instructions: The hourly price of the timeslot when your parking session started is the hourly price you pay during the full parking session.
+        /// This seems like a simplified version of the problem, I choose to implement it way it should be, taking the different time slots into account.
         /// </summary>
         /// <param name="session"></param>
         /// <param name="serviceProfile"></param>
@@ -172,6 +175,7 @@ namespace MobiliTreeApi.Services
             /// But since we are not making any network calls, and assuming that the service profile for each parking facility as being grabbed on a single rest call 
             /// (more than reasonable assumption, since the price catalog cannot be that big)
             /// the speed gain from the optimization is hardly worth the extra complexity.
+            /// 
             decimal totalPrice = 0;
             while (startTime < endTime)
             {
@@ -191,7 +195,7 @@ namespace MobiliTreeApi.Services
                 {
                     /// Since not clear by the requirements how the charging is implemented, we will assume that 
                     /// even if the customer parks at 12:59, he is still charged for the full hour.
-                    /// Otherewise we would need to check the minutes and charge a fraction of the hour.
+                    /// Otherewise we would need to check the minutes and charge a fraction of the hour, or 30 mins etc.
                     totalPrice += selectTimeSlot.PricePerHour;
                 }
 
